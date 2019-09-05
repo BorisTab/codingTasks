@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <malloc.h>
-#include <search.h>
 #include <assert.h>
 
 /*!
