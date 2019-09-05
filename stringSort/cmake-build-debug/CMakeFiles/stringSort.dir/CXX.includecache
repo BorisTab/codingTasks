@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/Boris/CLionProjects/stringSort/main.cpp
+stdio.h
+-
+malloc.h
+-
+search.h
+-
+assert.h
+-
+

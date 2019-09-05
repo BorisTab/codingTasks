@@ -1,0 +1,3 @@
+C:/Users/Boris/CLionProjects/stringSort/cmake-build-debug/CMakeFiles/stringSort.dir
+C:/Users/Boris/CLionProjects/stringSort/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Boris/CLionProjects/stringSort/cmake-build-debug/CMakeFiles/rebuild_cache.dir

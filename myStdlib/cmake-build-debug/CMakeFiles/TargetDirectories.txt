@@ -1,0 +1,3 @@
+C:/Users/Boris/CLionProjects/myStdlib/cmake-build-debug/CMakeFiles/myStdlib.dir
+C:/Users/Boris/CLionProjects/myStdlib/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Boris/CLionProjects/myStdlib/cmake-build-debug/CMakeFiles/rebuild_cache.dir
