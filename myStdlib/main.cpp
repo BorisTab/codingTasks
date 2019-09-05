@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <assert.h>
 
+/*!
+	@file
+    @brief myStdlib
+*/
 
 int AtoI(const char str[]);
 
@@ -23,6 +27,12 @@ int main() {
     return 0;
 }
 
+/*! convert string to integer
+ *
+ * @param[in] *str pointer to string for convert
+ *
+ * @return converted number
+ */
 int AtoI(const char *str) {
     assert(str != nullptr);
 
@@ -33,6 +43,12 @@ int AtoI(const char *str) {
     return n;
 }
 
+/*! convert integer to string
+ *
+ * @param[in] num number for convert
+ *
+ * @return pointer to converted string
+ */
 char *ItoA(int num) {
     char *str = nullptr;
     int i = 0;
@@ -62,6 +78,12 @@ char *ItoA(int num) {
     return ss;
 }
 
+/*! print string in stdout
+ *
+ * @param[in] *str pointer to string
+ *
+ * @return 0 on success, EOF on failure
+ */
 int PutS(char *str) {
     assert(str != nullptr);
 
@@ -69,10 +91,22 @@ int PutS(char *str) {
     for (i = 0; str[i] != '\n' && str[i] != '\0'; i++) {
         putc(str[i], stdout);
     }
-    if (str[i] == '\n') putc('\n', stdout);
+    if (str[i] == '\n') {
+        if (putc('\n', stdout) == EOF) {
+            return EOF;
+        }
+    }
     return 0;
 }
 
+/*! get string from file
+ *
+ * @param[in] str pointer to string
+ * @param[in] count max number of characters
+ * @param[in] stream file stream to read
+ *
+ * @return str on success, null pointer on failure
+ */
 char *fGetS(char *str, size_t count, FILE *stream) {
     assert(str != nullptr);
     assert(stream != nullptr);
@@ -87,4 +121,3 @@ char *fGetS(char *str, size_t count, FILE *stream) {
     *str = '\0';
     return str;
 }
-
