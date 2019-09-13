@@ -17,6 +17,13 @@ int nRows(const char str[], int textSize);
 
 int writeFile(char outPath[], char *text, int textSize);
 
+int strBackCmp(const void *string1, const void *string2);
+
+struct lineIndex {
+    char *startIndex;
+    char *endIndex;
+};
+
 int main() {
     char inPath[100] = R"(C:\Users\Boris\CLionProjects\stringSort\verse.txt)";
     char outPath[100] = R"(C:\Users\Boris\CLionProjects\stringSort\sortVerse.txt)";
@@ -26,31 +33,39 @@ int main() {
 //    gets(outPath);
     int textSize = getFileSize(inPath);
 
-    char *text;
-    text = (char *) calloc(textSize, sizeof(char));
+    char *text = (char *) calloc(textSize + 1, sizeof(char));
+    char *defaultText = text;
 
     if (readFile(inPath, text, textSize)) return 1;
     int rows = nRows(text, textSize);
-    char *index[rows] = {};
-    index[0] = text;
+    lineIndex index[rows] = {};
+    index[0].startIndex = text;
     int j = 1;
     for (int i = 0; i < textSize; i++) {
         if (text[i] == '\n') {
-            index[j] = &text[i] + 1;
+            index[j - 1].endIndex = &text[i] - 1;
+            index[j].startIndex = &text[i] + 1;
             j++;
             text[i] = '\0';
         }
     }
-    qsort(index, rows, sizeof(char *), strCmp);
+    text[textSize] = '\0';
+    index[j - 1].endIndex = &text[textSize] - 1;
+
+    qsort(index, rows, sizeof(lineIndex), strCmp);
     for (int i = 0; i < rows; i++) {
-        printf("%s\n", index[i]);
+        printf("%s\n", index[i].startIndex);
     }
-//    for (int i = 0; i < textSize; i++) {
-//        if (text[i] == '\0') {
-//            text[i] = '\n';
-//        }
-//    }
-    if (writeFile(outPath, *index, textSize)) return 1;
+    printf("\n\n\n\n\n");
+    qsort(index, rows, sizeof(lineIndex), strBackCmp);
+    for (int i = 0; i < rows; i++) {
+        printf("%s\n", index[i].startIndex);
+    }
+
+    printf("\n\n\n\n");
+    fwrite(defaultText, 1, textSize, stdout);
+    if (writeFile(outPath, index->startIndex, textSize)) return 1;
+    free(text);
     return 0;
 }
 
@@ -60,8 +75,8 @@ int main() {
  *
  * @return file size in bytes
  */
-int getFileSize(char inPath[]) {
-    assert(inPath != "");
+int getFileSize(char *inPath) {
+    assert(inPath != nullptr);
 
     FILE *myFile;
     myFile = fopen(inPath, "r");
@@ -110,13 +125,38 @@ int strCmp(const void *string1, const void *string2) {
     assert(string1 != nullptr);
     assert(string2 != nullptr);
 
-    char *str1 = *((char **) string1);
-    char *str2 = *((char **) string2);
+    char *str1 = (*((lineIndex *) string1)).startIndex;
+    char *str2 = (*((lineIndex *) string2)).startIndex;
     while (*str1 != '\0' || *str2 != '\0') {
-        if (*str1 == '\0' || *str2 == '\0') return 0;
+        while (*str1 < 'A' || *str1 > 'z') str1++;
+        while (*str2 < 'A' || *str2 > 'z') str2++;
+
         if (*str1 - *str2 != 0) return *str1 - *str2;
+        if (*(str1 + 1) == '\0' && *(str2 + 1) == '\0') return 0;
         str1++;
         str2++;
+    }
+}
+
+int strBackCmp(const void *string1, const void *string2) {
+    assert(string1 != nullptr);
+    assert(string2 != nullptr);
+
+    char *str1End = (*((lineIndex *) string1)).endIndex;
+    char *str2End = (*((lineIndex *) string2)).endIndex;
+
+    char *str1Start = (*((lineIndex *) string1)).startIndex;
+    char *str2Start = (*((lineIndex *) string2)).startIndex;
+
+    while (str1End != str1Start || str2End != str2Start) {
+        while (*str1End < 'A' || *str1End > 'z') str1End--;
+        while (*str2End < 'A' || *str2End > 'z') str2End--;
+
+        if (*str1End - *str2End != 0) return *str1End - *str2End;
+        if (str1End - 1 == str1Start && str2End - 1 == str2Start) return 0;
+
+        str1End--;
+        str2End--;
     }
 }
 
