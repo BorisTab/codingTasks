@@ -1,10 +1,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <assert.h>
-#include <errno.h>
 #include <ctype.h>
-
-//#define DEBUG
 
 /*!
 	@file
@@ -26,7 +23,7 @@ int readFile(const char inPath[], char *text, size_t textSize);
 
 int strCmpForStruct(const void *string1, const void *string2);
 
-int strCmp(char *str1, char *str2);
+int strCmp(const char *str1, const char *str2);
 
 int nRows(const char str[], size_t textSize, char element);
 
@@ -50,11 +47,11 @@ bool nRowsChecker(char *str, size_t textSize, int awaitN);
 
 bool strCmpChecker(char *str1, char *str2, int awaitVal);
 
-bool
-strBackCmpChecker(const char *str1Start, const char *str1End, const char *str2Start, const char *str2End, int awaitVal);
+bool strBackCmpChecker(const char *str1Start, const char *str1End, const char *str2Start, const char *str2End, int awaitVal);
 
-int main(int argc, char *argv[]) {
-    if (argv[argc] == "test") {
+int main(const int argc, const char * const argv[]) {
+
+    if (strCmp(argv[argc - 1], "--test") == 0) {
         int failedTests = tests();
         if (failedTests) {
             printf("\n%d tests failed\n", failedTests);
@@ -76,7 +73,7 @@ int main(int argc, char *argv[]) {
 
     readTextFromFile(inPath, text, &index, &textSize, &rows);
 
-    lineIndex defaultIndex[rows] = {};
+    auto defaultIndex = (lineIndex *) calloc(rows, sizeof(lineIndex));
     getIndexCopy(index, defaultIndex, rows);
 
     qsort(index, rows, sizeof(lineIndex), strCmpForStruct);
@@ -89,6 +86,7 @@ int main(int argc, char *argv[]) {
 
     free(text);
     free(index);
+    free(defaultIndex);
     return 0;
 }
 
@@ -157,7 +155,7 @@ int strCmpForStruct(const void *string1, const void *string2) {
  * @param[in] str2 Pointer to str2
  * @return negative value if string2 > string1, positive value if string1 > string2, 0 if string1 = string2
  */
-int strCmp(char *str1, char *str2) {
+int strCmp(const char *str1, const char *str2) {
     assert(str1 != nullptr);
     assert(str2 != nullptr);
 
@@ -341,6 +339,8 @@ void getIndexCopy(lineIndex *index, lineIndex *indexCopy, size_t rows) {
  * @param[out] rows number of lines in text
  */
 void readTextFromFile(const char inPath[], char *text, lineIndex **index, size_t *textSize, size_t *rows) {
+    assert(inPath != nullptr);
+
     *textSize = getFileSize(inPath);
 
     text = (char *) calloc(*textSize + 1, sizeof(char));
