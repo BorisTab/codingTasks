@@ -2,6 +2,9 @@
 #include <malloc.h>
 #include <assert.h>
 #include <errno.h>
+#include <ctype.h>
+
+//#define DEBUG
 
 /*!
 	@file
@@ -17,9 +20,9 @@ struct lineIndex {
     char *endIndex;
 };
 
-int getFileSize(char inPath[]);
+int getFileSize(const char inPath[]);
 
-int readFile(char inPath[], char *text, size_t textSize);
+int readFile(const char inPath[], char *text, size_t textSize);
 
 int strCmpForStruct(const void *string1, const void *string2);
 
@@ -27,17 +30,19 @@ int strCmp(char *str1, char *str2);
 
 int nRows(const char str[], size_t textSize, char element);
 
-int writeFile(char outPath[], lineIndex *text, size_t rows);
+int writeFile(const char outPath[], lineIndex *text, size_t rows);
 
-int writeFile(char outPath[], char **text, size_t rows);
+int writeFile(const char outPath[], char **text, size_t rows);
 
 int strBackCmpForStruct(const void *string1, const void *string2);
 
-int strBackCmp(const char *str1Start, char *str1End, const char *str2Start, char *str2End);
+int strBackCmp(const char *str1Start, const char *str1End, const char *str2Start, const char *str2End);
 
 void fillIndex(lineIndex *index, char *text, size_t textSize);
 
 void getIndexCopy(lineIndex *index, lineIndex *indexCopy, size_t rows);
+
+void readTextFromFile(const char inPath[], char *text, lineIndex **index, size_t *textSize, size_t *rows);
 
 int tests();
 
@@ -45,13 +50,18 @@ bool nRowsChecker(char *str, size_t textSize, int awaitN);
 
 bool strCmpChecker(char *str1, char *str2, int awaitVal);
 
-bool strBackCmpChecker(const char *str1Start, char *str1End, const char *str2Start, char *str2End, int awaitVal);
+bool
+strBackCmpChecker(const char *str1Start, const char *str1End, const char *str2Start, const char *str2End, int awaitVal);
 
-int main() {
-    int failedTests = tests();
-    printf("\n%d tests failed\n", failedTests);
-    if (failedTests) return TESTS_FAILED;
-
+int main(int argc, char *argv[]) {
+    if (argv[argc] == "test") {
+        int failedTests = tests();
+        if (failedTests) {
+            printf("\n%d tests failed\n", failedTests);
+            return TESTS_FAILED;
+        }
+        printf("Tests passed successfully\n");
+    }
     char inPath[FILENAME_MAX] = R"(..\verse.txt)";
     char outPath[FILENAME_MAX] = R"(..\sortVerse.txt)";
 
@@ -60,17 +70,13 @@ int main() {
 //    printf("Enter output file path:\n");
 //    gets(outPath);
 
-    int textSize = getFileSize(inPath);
+    size_t textSize = 0, rows = 0;
+    char *text = nullptr;
+    lineIndex *index = nullptr;
 
-    char *text = (char *) calloc(textSize + 1, sizeof(char));
+    readTextFromFile(inPath, text, &index, &textSize, &rows);
 
-    if (readFile(inPath, text, textSize)) return errno;
-    int rows = nRows(text, textSize, '\n');
-
-    lineIndex index[rows] = {};
     lineIndex defaultIndex[rows] = {};
-
-    fillIndex(index, text, textSize);
     getIndexCopy(index, defaultIndex, rows);
 
     qsort(index, rows, sizeof(lineIndex), strCmpForStruct);
@@ -82,6 +88,7 @@ int main() {
     if (writeFile(outPath, defaultIndex, rows)) return errno;
 
     free(text);
+    free(index);
     return 0;
 }
 
@@ -91,7 +98,7 @@ int main() {
  *
  * @return file size in bytes
  */
-int getFileSize(char *inPath) {
+int getFileSize(const char *inPath) {
     assert(inPath != nullptr);
 
     FILE *myFile = fopen(inPath, "r");
@@ -113,7 +120,7 @@ int getFileSize(char *inPath) {
  *
  * @return 0 if read success, errno if read fall
  */
-int readFile(char inPath[], char *text, size_t textSize) {
+int readFile(const char inPath[], char *text, size_t textSize) {
     assert(inPath != "");
     assert(text != nullptr);
 
@@ -155,13 +162,13 @@ int strCmp(char *str1, char *str2) {
     assert(str2 != nullptr);
 
     while (*str1 != '\0' || *str2 != '\0') {
-        while (*str1 < 'A' || *str1 > 'z') str1++;
-        while (*str2 < 'A' || *str2 > 'z') str2++;
+        while (!isalpha(*str1)) str1++;
+        while (!isalpha(*str2)) str2++;
 
-        if (*str1 < 'a') *str1 += ('a' - 'A');
-        if (*str2 < 'a') *str2 += ('a' - 'A');
+        int ch1 = tolower(*str1);
+        int ch2 = tolower(*str2);
 
-        if (*str1 - *str2 != 0) return *str1 - *str2;
+        if (ch1 - ch2 != 0) return ch1 - ch2;
         if (*(str1 + 1) == '\0' && *(str2 + 1) == '\0') return 0;
         str1++;
         str2++;
@@ -196,15 +203,15 @@ int strBackCmpForStruct(const void *string1, const void *string2) {
  * @param[in] str2End Pointer to last letter in str2
  * @return n > 0 negative value if string2 > string1, positive value if string1 > string2, 0 if string1 = string2
  */
-int strBackCmp(const char *str1Start, char *str1End, const char *str2Start, char *str2End) {
+int strBackCmp(const char *str1Start, const char *str1End, const char *str2Start, const char *str2End) {
     while (str1End != str1Start || str2End != str2Start) {
-        while (*str1End < 'A' || *str1End > 'z') str1End--;
-        while (*str2End < 'A' || *str2End > 'z') str2End--;
+        while (!isalpha(*str1End)) str1End--;
+        while (!isalpha(*str2End)) str2End--;
 
-        if (*str1End < 'a') *str1End += ('a' - 'A');
-        if (*str2End < 'a') *str2End += ('a' - 'A');
+        int ch1 = tolower(*str1End);
+        int ch2 = tolower(*str2End);
 
-        if (*str1End - *str2End != 0) return *str1End - *str2End;
+        if (ch1 - ch2 != 0) return ch1 - ch2;
         if (str1End - 1 == str1Start && str2End - 1 == str2Start) return 0;
 
         str1End--;
@@ -239,7 +246,7 @@ int nRows(const char *str, size_t textSize, char element) {
  *
  * @return 0 if write success, errno if write fall
  */
-int writeFile(char outPath[], lineIndex *text, size_t rows) {
+int writeFile(const char outPath[], lineIndex *text, size_t rows) {
     assert(outPath != nullptr);
     assert(text != nullptr);
 
@@ -265,7 +272,7 @@ int writeFile(char outPath[], lineIndex *text, size_t rows) {
  *
  * @return 0 if write success, 1 if write fall
  */
-int writeFile(char outPath[], char **text, size_t rows) {
+int writeFile(const char outPath[], char **text, size_t rows) {
     assert(outPath != nullptr);
     assert(text != nullptr);
 
@@ -299,7 +306,9 @@ void fillIndex(lineIndex *index, char *text, size_t textSize) {
         if (text[i] == '\n') {
             index[lines - 1].endIndex = &text[i] - 1;
             index[lines].startIndex = &text[i] + 1;
+
             lines++;
+
             text[i] = '\0';
         }
     }
@@ -323,41 +332,58 @@ void getIndexCopy(lineIndex *index, lineIndex *indexCopy, size_t rows) {
     }
 }
 
+/*! read text from file
+ *
+ * @param[in] inPath path to read file
+ * @param[out] text Pointer to buffer for read text
+ * @param[out] index Pointer to array of structures with pointers on string start and string end
+ * @param[out] textSize text size in bytes
+ * @param[out] rows number of lines in text
+ */
+void readTextFromFile(const char inPath[], char *text, lineIndex **index, size_t *textSize, size_t *rows) {
+    *textSize = getFileSize(inPath);
+
+    text = (char *) calloc(*textSize + 1, sizeof(char));
+
+    if (readFile(inPath, text, *textSize)) exit(errno);
+    *rows = nRows(text, *textSize, '\n');
+
+    *index = (lineIndex *) calloc(*rows, sizeof(lineIndex));
+    fillIndex(*index, text, *textSize);
+}
+
 int tests() {
     int errors = 0;
 
     printf("1 ");
     !nRowsChecker("\n\n\n\nskd", 7, 5) ? errors++ : NULL;
-
     printf("2 ");
     !nRowsChecker("ggg\nd\nd\ndnn", 11, 4) ? errors++ : NULL;
-
     printf("3 ");
     !nRowsChecker("\n\r\0\0\n\r\n", 7, 4) ? errors++ : NULL;
 
     printf("4 ");
     !strCmpChecker("aaaa", "abffgaa", 2) ? errors++ : NULL;
-
     printf("5 ");
     !strCmpChecker("aaaabb", "aaaabaa", 1) ? errors++ : NULL;
-
     printf("6 ");
     !strCmpChecker("aaaa", "aaaa", 0) ? errors++ : NULL;
 
+    const char *str1 = "aaba";
+    const char *str2 = "bbba";
     printf("7 ");
-    char *str1 = "aaba";
-    char *str2 = "bbba";
     !strBackCmpChecker(str1, str1 + 3, str2, str2 + 3, 2) ? errors++ : NULL;
 
-    printf("8 ");
     str1 = "fjf,,sa,,s,z,s,";
     str2 = "vff$@#*^e!s..;";
+    printf("8 ");
     !strBackCmpChecker(str1, str1 + 14, str2, str2 + 13, 1) ? errors++ : NULL;
 
-    printf("9 ");
     str1 = "fjf,,sa,,s,z,s,";
     str2 = "fjf(sa,,sz),s";
+    printf("9 ");
     !strBackCmpChecker(str1, str1 + 14, str2, str2 + 13, 0) ? errors++ : NULL;
+
     return errors;
 }
 
@@ -408,7 +434,8 @@ bool strCmpChecker(char *str1, char *str2, int awaitVal) {
     return true;
 }
 
-bool strBackCmpChecker(const char *str1Start, char *str1End, const char *str2Start, char *str2End, int awaitVal) {
+bool strBackCmpChecker(const char *str1Start, const char *str1End, const char *str2Start, const char *str2End,
+                       int awaitVal) {
     int gotVal = strBackCmp(str1Start, str1End, str2Start, str2End);
     if (gotVal > 0 && awaitVal == 2) {
         printf("Error\n"
